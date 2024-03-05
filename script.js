@@ -1,52 +1,60 @@
-const cronometro= document.getElementById('cronometro');
-const time= document.getElementById('time');
-const startbtn= document.getElementById('start');
-const stopbtn= document.getElementById('stop');
-const resetbtn= document.getElementById('reset');
+const createStopwatch = (handleElapsedTime) => {
+    let isRunning = false
+    let interval = undefined;
+    let elapsedTime = 0
 
-let isRunning = false;
-let interval;
-let elapsedTime=0;
+    const start = () => {
+        if (isRunning)
+        return;
 
-function updateTimer() {
-    let segundos= Math.floor(elapsedTime/1000);
-let minutos= Math.floor(segundos/60);
-let horas= Math.floor(minutos/60);
-
-horas%=60;
-minutos%=60;
-segundos%=60;
-
-horas= horas < 10 ? '0' + horas : horas
-minutos= minutos < 10 ? '0' + minutos : minutos
-segundos= segundos < 10 ? '0' + segundos : segundos
-
-time.textContent=`${horas}: ${minutos}: ${segundos}`
-}
-
-function startStopwatch() {
-    if(!isRunning){
-        isRunning= true;
-        interval= setInterval(()=>{
-            elapsedTime +=1000
-            updateTimer()
+        isRunning = true;
+        interval = setInterval(() => {
+            elapsedTime += 1000
+            handleElapsedTime(elapsedTime)
         }, 1000)
     }
-}
 
-function stopStopwatch() {
-    if(isRunning){
-        isRunning= false;
+    const stop = () => {
+        if (!isRunning)
+            return;
+
+        isRunning = false
         clearInterval(interval)
+    }
+
+    const reset = () => {
+        stop()
+        elapsedTime = 0
+        handleElapsedTime(elapsedTime)
+    }
+
+    return {
+        start,
+        stop,
+        reset
     }
 }
 
-function resetStopwatch() {
-    stopStopwatch()
-    elapsedTime=0
-    updateTimer()
+const formatTimeValue = (value) => value < 10 ? '0' + value : value
+
+const formatTime = (horas, minutos, segundos) => `${formatTimeValue(horas)}: ${formatTimeValue(minutos)}: ${formatTimeValue(segundos)}`
+
+const getTimeFromMilliseconds = (milliseconds) => {
+    const segundos = Math.floor(milliseconds / 1000) % 60
+    const minutos = Math.floor(segundos / 60) % 60
+    const horas = Math.floor(minutos / 60) % 60
+
+    return { horas, minutos, segundos }
 }
 
-startbtn.addEventListener('click',startStopwatch)
-stopbtn.addEventListener('click',stopStopwatch)
-resetbtn.addEventListener('click',resetStopwatch)
+const updateTimer = (cronometroElement) => (elapsedTime) => {
+    const { horas, minutos, segundos } = getTimeFromMilliseconds(elapsedTime)
+    const formattedTime = formatTime(horas, minutos, segundos)
+    cronometroElement.textContent = formattedTime
+}
+
+const { start, stop, reset } = createStopwatch(updateTimer(document.getElementById('time')))
+
+document.getElementById('start').addEventListener('click', start)
+document.getElementById('stop').addEventListener('click', stop)
+document.getElementById('reset').addEventListener('click', reset)
